@@ -2,7 +2,7 @@ function onOpen()
 {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('Automation')
-    .addItem('send PDF Form', 'sendPDFForm')
+    .addItem('send to one person', 'sendPDFForm')
     .addItem('send to all', 'sendFormToAll')
     .addToUi();
 }
@@ -35,13 +35,18 @@ function sendEmailWithAttachment(row)
   if (!file.hasNext()) 
   {
     console.error("Could not open file " + filename);
-    sheet.getRange(row,3).setValue("failed (no file)");
+    sheet.getRange(row,3).setValue("FAILURE (could not find file)");
     return;
   }
   
-  var template = HtmlService.createTemplateFromFile('LoveLettersTemplate');
-  template.client = client;
-  var message = template.evaluate().getContent();
+  try {
+    var template = HtmlService.createTemplateFromFile('LoveLettersTemplate');
+    template.client = client;
+    var message = template.evaluate().getContent();
+  } catch {
+    sheet.getRange(row,3).setValue("FAILURE (could not create email)");
+  }
+  
   
   try {
     MailApp.sendEmail({
@@ -52,7 +57,7 @@ function sendEmailWithAttachment(row)
     });
     sheet.getRange(row,3).setValue("email sent");
   } catch {
-    sheet.getRange(row,3).setValue("failed (email failed to send)");
+    sheet.getRange(row,3).setValue("FAILURE (email failed to send)");
   }
 }
 
